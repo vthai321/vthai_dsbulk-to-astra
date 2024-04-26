@@ -3,13 +3,14 @@ from cassandra.auth import PlainTextAuthProvider
 import json
 
 # Replace with your secure connect bundle path and credentials
-SECURE_CONNECT_BUNDLE = 'C:\csClasses\cs122d\HW2\python_proj\secure-connect-cs122dspring2024.zip'
+SECURE_CONNECT_BUNDLE = 'secure-connect-cs122dspring2024.zip' # using absolute path to prevent bug with socket where URL >64 chars
 ASTRA_CLIENT_ID = 'BkzEPjuHWGmKSmHRgqvChkiu'
 ASTRA_CLIENT_SECRET = 'qmvOO_Bw,rReGz9XlenxL,yO-pc8xMc+0CQ312MmA0hBk6a04PTSeNG90MdqUwgmFN1eHo,lvCe_5zW5PojqpTuwo+yP0va0GmrIwgiUP0g1WrabWb+hP5.lN0R-1JOL'
 
 def create_astra_connection():
   # use cassandra cluster
-  cluster = Cluster(SECURE_CONNECT_BUNDLE, auth_provider=PlainTextAuthProvider(ASTRA_CLIENT_ID, ASTRA_CLIENT_SECRET))
+  cloud_config = {'secure_connect_bundle': SECURE_CONNECT_BUNDLE}
+  cluster = Cluster(cloud=cloud_config, auth_provider=PlainTextAuthProvider(ASTRA_CLIENT_ID, ASTRA_CLIENT_SECRET))
   session = cluster.connect()
   return session
 
@@ -28,13 +29,13 @@ def insert_ad(session, ad_data):
 
   insert_query_1 = """
   INSERT INTO punkcity.ad (adid, content, itemid, level, merchantid)
-  VALUES (? ? ? ? ?);
+  VALUES (%s, %s, %s, %s, %s);
   """
   session.execute(insert_query_1, [adid, content, itemid, level, merchantid])
 
   insert_query_2 = """
   INSERT INTO punkcity.adq7c (level, itemid, adid)
-  VALUES (? ? ?);
+  VALUES (%s, %s, %s);
   """
   session.execute(insert_query_2, [level, itemid, adid])
 
@@ -52,6 +53,7 @@ def main():
     "level": "silver",
     "merchantid": "AP5ZX"
   }
+  ad_data = json.dumps(ad_data)
   insert_ad(session, ad_data)
   session.shutdown()
 
